@@ -1,5 +1,8 @@
 import numpy as np
 from helpers import progressbar
+import skimage
+from skimage import color
+import scipy
 
 '''
 READ FIRST: Relationship Between Functions
@@ -69,8 +72,17 @@ def get_tiny_images(image_paths, extra_credit=False):
     '''
 
     #TODO: Implement this function!
+    images = []
+    for im in image_paths:
+        image = skimage.io.imread(im)
+        if image.shape[-1] == 3:
+            image = color.rgb2gray(image)
+        image = skimage.transform.resize(image, (16, 16), anti_aliasing=True)
+        image = image.flatten()
+        images.append(image)
 
-    return np.array([])
+
+    return np.array(images).reshape(-1, 256)
 
 def build_vocabulary(image_paths, vocab_size, extra_credit=False):
     '''
@@ -249,7 +261,16 @@ def nearest_neighbor_classify(train_image_feats, train_labels, test_image_feats,
         scipy.spatial.distance.cdist, np.argsort, scipy.stats.mode
     '''
 
-    k = 1
+    k = 7
+    distances = scipy.spatial.distance.cdist(test_image_feats, train_image_feats, 'euclidean')
+    nearest_indices = np.argsort(np.asarray(distances), axis=1)
+    k_nearest_indices = nearest_indices[:, :k]
+    k_nearest_labels = []
+    for i in range (len(train_labels)):
+        k_nearest_labels.append(np.asarray(train_labels)[k_nearest_indices[i]])
+    k_nearest_labels = np.asarray(k_nearest_labels).reshape(-1, k)
+    most_common, _ = scipy.stats.mode(k_nearest_labels, axis=1, keepdims=True)
+    most_common = np.asarray(most_common).flatten()
     
     #TODO:
     # 1) Find the k closest training features to each test image feature by some distance, e.g., Euclidean (L2)
@@ -257,4 +278,4 @@ def nearest_neighbor_classify(train_image_feats, train_labels, test_image_feats,
     # 3) Pick the most common label from the k
     # 4) Store that label in a list
 
-    return np.array([])
+    return np.array(most_common)
