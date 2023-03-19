@@ -3,6 +3,7 @@ from helpers import progressbar
 import skimage
 from skimage import color
 import scipy
+from sklearn.cluster import MiniBatchKMeans
 
 '''
 READ FIRST: Relationship Between Functions
@@ -156,11 +157,21 @@ def build_vocabulary(image_paths, vocab_size, extra_credit=False):
     #TODO: Implement this function!
     
     num_imgs = len(image_paths)
+    vocab_dict = []
     
     for i in progressbar(range(num_imgs), "Loading ...", num_imgs):
-        pass
-
-    return np.array([])
+        image = skimage.io.imread(image_paths[i])
+        if image.shape[-1] == 3:
+            image = color.rgb2gray(image)
+        result = skimage.feature.hog(image, orientations=9, pixels_per_cell=(4, 4), cells_per_block=(4, 4), feature_vector=True)
+        block_f_vec = np.asarray(result).reshape(-1, 4*4*9)
+        vocab_dict.append(block_f_vec)
+    vocab_dict = np.concatenate(vocab_dict)
+    vocab_dict = vocab_dict.reshape(-1, 4*4*9)
+    kmeans = MiniBatchKMeans(n_clusters=vocab_size, max_iter=100).fit(vocab_dict)
+    kmeans_cluster_centers = kmeans.cluster_centers_
+    kmeans_cluster_centers = np.asarray(kmeans_cluster_centers).reshape(-1, 4*4*9)
+    return kmeans_cluster_centers
 
 def get_bags_of_words(image_paths, vocab, extra_credit=False):
     '''
@@ -193,8 +204,23 @@ def get_bags_of_words(image_paths, vocab, extra_credit=False):
     '''
 
     #TODO: Implement this function!
+    num_imgs = len(image_paths)
+    total_histogram = []
+    
+    for i in range(num_imgs):
+        histogram = np.zeros(len(vocab))
+        image = skimage.io.imread(image_paths[i])
+        if image.shape[-1] == 3:
+            image = color.rgb2gray(image)
+        result = skimage.feature.hog(image, orientations=9, pixels_per_cell=(4, 4), cells_per_block=(4, 4), feature_vector=True)
+        block_f_vec = np.asarray(result).reshape(-1, 4*4*9)
+        distances = scipy.spatial.distance.cdist(block_f_vec, vocab, 'euclidean')
+        nearest_word = np.argsort(np.asarray(distances), axis=1)[:, 0]
+        for w in nearest_word:
+            histogram[w] += 1
+        total_histogram.append(histogram)
 
-    return np.array([])
+    return np.array(total_histogram).reshape(num_imgs, -1)
 
 def svm_classify(train_image_feats, train_labels, test_image_feats, extra_credit=False):
     '''
