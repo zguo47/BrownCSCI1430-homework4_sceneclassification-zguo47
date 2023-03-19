@@ -209,7 +209,6 @@ def get_bags_of_words(image_paths, vocab, extra_credit=False):
     total_histogram = []
     
     for i in range(num_imgs):
-        histogram = np.zeros(len(vocab))
         image = skimage.io.imread(image_paths[i])
         if image.shape[-1] == 3:
             image = color.rgb2gray(image)
@@ -217,8 +216,9 @@ def get_bags_of_words(image_paths, vocab, extra_credit=False):
         block_f_vec = np.asarray(result).reshape(-1, 4*4*9)
         distances = scipy.spatial.distance.cdist(block_f_vec, vocab, 'euclidean')
         nearest_word = np.argsort(np.asarray(distances), axis=1)[:, 0]
-        for w in nearest_word:
-            histogram[w] += 1
+        histogram, _ = np.histogram(nearest_word, bins=np.arange(len(vocab)), density=False)
+        # for w in nearest_word:
+        #     histogram[w] += 1
         total_histogram.append(histogram)
 
     return np.array(total_histogram).reshape(num_imgs, -1)
