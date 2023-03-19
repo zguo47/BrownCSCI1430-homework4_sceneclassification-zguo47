@@ -4,6 +4,7 @@ import skimage
 from skimage import color
 import scipy
 from sklearn.cluster import MiniBatchKMeans
+from model import SVM
 
 '''
 READ FIRST: Relationship Between Functions
@@ -250,8 +251,38 @@ def svm_classify(train_image_feats, train_labels, test_image_feats, extra_credit
     # - train() returns weights and biases; use these to score each image.
     # - You are not allowed to edit the SVM class. The autograder will use our own version of the SVM class.
     # - If you wish to implement more complex classifiers, use the extra_credit parameter.
-
-    return np.array([])
+    # create a list for training results
+    weights_list = []
+    bias_list = []
+    label_lst = []
+    svm = SVM()
+    # create a binary label vector for each class
+    for label in np.unique(train_labels):
+        binary_labels = np.where(np.asarray(train_labels) == label, 1, -1)
+         
+        # Train classification hyperplane
+        weights, bias = svm.train(train_image_feats, binary_labels)
+        weights_list.append(weights)
+        bias_list.append(bias)
+    
+    weights_list = np.asarray(weights_list)
+    bias_list = np.asarray(bias_list)
+    # Compute test score for each classifier
+    for img in range(test_image_feats.shape[0]):
+        max_score = float('-inf')
+        max_class = -1
+        for j in range(np.size(np.unique(train_labels))):
+        # compute test score for each classifier
+            test_score = np.dot(weights_list[j].flatten(), test_image_feats[img].flatten()) + bias_list[j]
+        
+        # if the test score is better, replace the max score as the test score
+            if test_score > max_score:
+                max_score = test_score
+                max_class = np.unique(train_labels)[j]
+            
+        label_lst.append([max_class])
+    result = np.array(label_lst).flatten()
+    return result
 
 def nearest_neighbor_classify(train_image_feats, train_labels, test_image_feats, extra_credit=False):
     '''
@@ -304,4 +335,5 @@ def nearest_neighbor_classify(train_image_feats, train_labels, test_image_feats,
     # 3) Pick the most common label from the k
     # 4) Store that label in a list
 
+    print(np.array(most_common))
     return np.array(most_common)

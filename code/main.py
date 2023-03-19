@@ -116,7 +116,7 @@ def projSceneRecBoW(feature='placeholder', classifier='placeholder', load_vocab=
             print('Computing vocab from training images.')
 
             #Larger values will work better (to a point), but are slower to compute
-            vocab_size = 200
+            vocab_size = 300
 
             # YOU CODE build_vocabulary (see student.py)
             vocab = build_vocabulary(train_image_paths, vocab_size)
@@ -134,11 +134,15 @@ def projSceneRecBoW(feature='placeholder', classifier='placeholder', load_vocab=
 
         # YOU CODE get_bags_of_words.m (see student.py)
         train_image_feats = get_bags_of_words(train_image_paths, vocab)
+        np.save('train_feats.npy', train_image_feats)
+        # train_image_feats = np.load('train_feats.npy')
         # You may want to write out train_image_features here as a *.npy and
         # load it up later if you want to just test your classifiers without
         # re-computing features
 
         test_image_feats  = get_bags_of_words(test_image_paths, vocab)
+        np.save('test_feats.npy', test_image_feats)
+        # test_image_feats  = np.load('test_feats.npy')
         # Same goes here for test image features.
 
     elif FEATURE.lower() == 'placeholder':
